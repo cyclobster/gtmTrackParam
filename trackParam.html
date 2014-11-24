@@ -1,0 +1,127 @@
+<script type="text/javascript">
+/*
+ * THIS CODE AND INFORMATION ARE PROVIDED "AS IS" WITHOUT
+ * WARRANTY OF ANY KIND, EITHER EXPRESSED OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND/OR FITNESS FOR A PARTICULAR PURPOSE.
+ * 
+ * This tag is designed to track any single value found in URL
+ * query string and then push it into the predefined form.
+ *
+ * By default, this tag decides attribution by "first click".
+ * In other works, once the value is set it cannot be reset
+ * until the cookie expires or is deleted.
+ * 
+ * IMPORTANT: This is designed for use ONLY as a Google Tag
+ * Manager custom HTML tag. The page must be using jQuery.
+ * Make sure that the firing rules load this tag only load
+ * on or after event = gtm.load. Otherwise jQuery may not
+ * be defined.
+ *
+ * You need to define the following three properties in
+ * TrackParam.init:
+ *        @key  string  Name of query string parameter
+ *        @formFieldName  string  Name of form field
+ *        @form   object  The form you will append the data to
+ *        @cookieLength int  The number of days to save cookie
+ */
+(function() {
+    try {
+        var TrackParam = {
+
+            init: function() {
+
+                // Set properties as explained in description.
+                this.key = ''; // the URL param you want tracked
+                this.formFieldName = ''; // tha name of the form field
+                this.form = '';  // Jquery selector can be used here
+                this.cookieLength = 1; // num days till cookie expires
+
+                this.getParam();
+                this.appendParam();
+            },
+
+            saveParam: function() {
+
+                // Get param defined by key.
+                var param = this.key.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+                var regex = new RegExp("[\\?&]" + param + "=([^&#]*)"),
+                    results = regex.exec(location.search);
+
+                // Don't save as cookie if value doesn't exist.
+                if (results === null) {
+                    this.paramValue = null;
+                    // console.log("No value exists");
+                    return;
+
+                // Save as cookie if value exists.
+                } else {
+                    this.paramValue = decodeURIComponent(results[1].replace(/\+/g, " "));
+                    // console.log("Found New Param: " + this.paramValue);
+
+                    var expires;
+                    var date = new Date();
+                    // Cookie length should be for 6 months.
+                    date.setTime(date.getTime() + (this.cookieLength * 24 * 60 * 60 * 1000));
+                    expires = "; expires=" + date.toGMTString();
+                    var parts = location.hostname.split('.');
+                    var subdomain = parts.shift();
+                    var upperLevelDomain = parts.join('.');
+                    document.cookie = this.key + "=" + this.paramValue + expires +
+                        "; path=/; Domain=." + upperLevelDomain;                    
+                }
+            },
+
+            getParam: function() {
+
+                // Retrieve value from cookie.
+                if (document.cookie.length > 0) {
+                    var cStart = document.cookie.indexOf(this.key + "=");
+                    if (cStart != -1) {
+                        cStart = cStart + this.key.length + 1;
+                        var cEnd = document.cookie.indexOf(";", cStart);
+                        if (cEnd == -1) {
+                            cEnd = document.cookie.length;
+                        }
+                        this.paramValue = unescape(document.cookie.substring(cStart, c_end));
+                        // console.log("Found Existing Kcid: " + this.paramValue);
+
+                    // If cookie doesn't exist, check in URL.
+                    } else {
+                        this.saveParam();
+                    }
+
+                // If cookie doesn't exist, check in URL.
+                } else {
+                    this.saveParam();
+                }
+            },
+
+            appendParam: function() {
+                // Check if form exists.
+                if (typeof this.form == "undefined") {
+                    // console.log("This form does not exist on the page.");
+                } else {
+
+                    // Insert value into form only if value is set.
+                    if (this.paramValue) {
+                        $('<input>').attr({
+                            type: 'hidden',
+                            name: 'kcid',
+                            value: this.paramValue
+                        }).appendTo(this.form);
+                    } else {
+                        console.log("Not Defined");
+                    }
+                }
+            }
+
+        }
+
+        TrackParam.init();
+
+    } catch (e) {
+        // console.log('GTM Error: ' + e);
+    }
+})();
+</script>
